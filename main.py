@@ -16,6 +16,7 @@ from research_context import CONTEXT
 
 # Constants
 MAX_REVISION_ATTEMPTS = 3  # Maximum number of times research can be sent back for revision
+MAX_RPM = 2  # Maximum requests per minute to control rate limiting
 
 # Load environment variables
 load_dotenv()
@@ -46,8 +47,10 @@ if "OPENAI_API_KEY" not in os.environ:
     print("ERROR: OpenAI API key is required. Set OPENAI_API_KEY environment variable.")
     exit(1)
 
-# Initialize the OpenAI LLM
-llm = ChatOpenAI(model="gpt-4o")
+llm = ChatOpenAI(
+    model="gpt-4o",
+    temperature=0.7
+)
 
 # Define the music researcher agent
 music_researcher = Agent(
@@ -60,7 +63,8 @@ music_researcher = Agent(
     verbose=True,
     allow_delegation=True,
     tools=[web_search, gather_style_sources],
-    llm=llm
+    llm=llm,
+    max_rpm=MAX_RPM  # Add rate limiting to control tokens per minute
 )
 
 # Define the project manager agent
@@ -78,7 +82,8 @@ project_manager = Agent(
     verbose=True,
     allow_delegation=True,
     tools=[],  # No special tools needed for the manager
-    llm=llm
+    llm=llm,
+    max_rpm=MAX_RPM  # Add rate limiting to control tokens per minute
 )
 
 # Define the research task
@@ -228,7 +233,8 @@ def main():
         agents=[music_researcher, project_manager],
         tasks=[research_task, verification_task],
         verbose=True,
-        process=Process.sequential  # Use Process.sequential instead of Crew.SEQUENTIAL
+        process=Process.sequential,  # Use Process.sequential instead of Crew.SEQUENTIAL
+        rpm=MAX_RPM  # Apply rate limiting at the crew level as well
     )
     
     # Execute the crew
