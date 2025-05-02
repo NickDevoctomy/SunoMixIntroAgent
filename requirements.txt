@@ -1,0 +1,7 @@
+crewai>=0.28.5
+langchain-openai>=0.0.2
+openai>=1.10.0
+python-dotenv>=1.0.0
+requests>=2.31.0
+beautifulsoup4>=4.12.2
+tavily-python>=0.2.9 
