@@ -33,7 +33,7 @@ def create_project_manager_agent(max_revision_attempts=3, llm=None, max_rpm=2, u
                 model="anthropic/claude-3-5-haiku-20241022",
                 temperature=0.7,
                 anthropic_api_key=os.environ["ANTHROPIC_API_KEY"],
-                max_tokens=45000  # Claude 3.5 Haiku has a higher TPM limit (45k)
+                max_tokens=8192  # Claude 3.5 Haiku's maximum output token limit
             )
         else:
             if "OPENAI_API_KEY" not in os.environ:
@@ -61,8 +61,8 @@ def create_project_manager_agent(max_revision_attempts=3, llm=None, max_rpm=2, u
         substantive information. You have a reputation for catching errors and omissions that others miss.
         You will only allow up to {max_revision_attempts} revision attempts before making the final decision.
         
-        When approving research, you MUST return the COMPLETE JSON data as your ENTIRE response,
-        with no additional commentary. The JSON must be valid and parsable.""",
+        When approving research, you MUST return the COMPLETE markdown document as your ENTIRE response,
+        with no additional commentary. The markdown must be properly formatted with all required sections.""",
         verbose=True,
         allow_delegation=True,
         tools=[],  # No special tools needed for the manager

@@ -35,7 +35,7 @@ def create_music_researcher_agent(llm=None, max_rpm=2, use_anthropic=False):
                 model="anthropic/claude-3-5-haiku-20241022",
                 temperature=0.7,
                 anthropic_api_key=os.environ["ANTHROPIC_API_KEY"],
-                max_tokens=45000  # Claude 3.5 Haiku has a higher TPM limit (45k)
+                max_tokens=8192  # Claude 3.5 Haiku's maximum output token limit
             )
         else:
             if "OPENAI_API_KEY" not in os.environ:

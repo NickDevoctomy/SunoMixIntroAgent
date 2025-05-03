@@ -31,7 +31,7 @@ from utils.file_operations import save_result_to_file
 # Constants
 MAX_REVISION_ATTEMPTS = 3  # Maximum number of times research can be sent back for revision
 MAX_RPM = 2  # Maximum requests per minute to control rate limiting
-MAX_CONTEXT_LENGTH = 40000  # Increased for Claude 3.5 Haiku's 45k TPM limit
+MAX_CONTEXT_LENGTH = 8192  # Reduced for Claude 3.5 Haiku's max output token limit
 USE_ANTHROPIC = True  # Set to True to use Anthropic Claude, False to use OpenAI
 
 # Load environment variables
@@ -101,7 +101,12 @@ def main():
     
     # Configure memory parameters appropriately for the selected LLM
     model_kwargs = {}
-    if not USE_ANTHROPIC:
+    if USE_ANTHROPIC:
+        # Anthropic-specific configuration
+        model_kwargs = {
+            "max_tokens": MAX_CONTEXT_LENGTH  # Set to match the max output token limit for Claude 3.5 Haiku
+        }
+    else:
         # OpenAI-specific configuration
         model_kwargs = {
             "truncation_strategy": {
@@ -118,7 +123,8 @@ def main():
         verbose=True,
         process=Process.sequential,  # Use Process.sequential instead of Crew.SEQUENTIAL
         rpm=MAX_RPM,  # Apply rate limiting at the crew level as well
-        model_kwargs=model_kwargs
+        model_kwargs=model_kwargs,
+        memory=True  # Add memory to help manage token usage
     )
     
     # Execute the crew
