@@ -7,31 +7,51 @@ for gathering comprehensive information about musical artists.
 
 from crewai import Agent
 from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 import os
 
 # Import tools from the tools package
 from tools import create_web_search_tool, create_style_sources_tool
 
-def create_music_researcher_agent(llm=None, max_rpm=2):
+def create_music_researcher_agent(llm=None, max_rpm=2, use_anthropic=False):
     """
     Create and return a music researcher agent.
     
     Args:
-        llm: Language model to use for the agent (default: None, will use gpt-4o)
+        llm: Language model to use for the agent (default: None, will create based on use_anthropic)
         max_rpm: Maximum requests per minute to control rate limiting (default: 2)
+        use_anthropic: Whether to use Anthropic Claude instead of OpenAI (default: False)
         
     Returns:
         Agent: Configured music researcher agent
     """
     # Create a new LLM if one wasn't provided
     if llm is None:
-        if "OPENAI_API_KEY" not in os.environ:
-            raise ValueError("OpenAI API key not found in environment variables")
-        
-        llm = ChatOpenAI(
-            model="gpt-4o",
-            temperature=0.7
-        )
+        if use_anthropic:
+            if "ANTHROPIC_API_KEY" not in os.environ:
+                raise ValueError("Anthropic API key not found in environment variables")
+            
+            llm = ChatAnthropic(
+                model="anthropic/claude-3-5-haiku-20241022",
+                temperature=0.7,
+                anthropic_api_key=os.environ["ANTHROPIC_API_KEY"],
+                max_tokens=45000  # Claude 3.5 Haiku has a higher TPM limit (45k)
+            )
+        else:
+            if "OPENAI_API_KEY" not in os.environ:
+                raise ValueError("OpenAI API key not found in environment variables")
+            
+            llm = ChatOpenAI(
+                model="gpt-4o",
+                temperature=0.7,
+                # Add truncation_strategy to handle large messages
+                model_kwargs={
+                    "truncation_strategy": {
+                        "type": "auto",
+                        "max_context_length": 28000  # Keep below the 30k TPM limit
+                    }
+                }
+            )
     
     # Get the tools from the tools package
     web_search = create_web_search_tool()

@@ -11,7 +11,7 @@ import time
 import datetime
 from pathlib import Path
 from dotenv import load_dotenv
-from crewai import Crew, Process
+from crewai import Crew, Process, LLM
 
 # Import the context from the dedicated module
 from research_context import CONTEXT
@@ -31,6 +31,8 @@ from utils.file_operations import save_result_to_file
 # Constants
 MAX_REVISION_ATTEMPTS = 3  # Maximum number of times research can be sent back for revision
 MAX_RPM = 2  # Maximum requests per minute to control rate limiting
+MAX_CONTEXT_LENGTH = 40000  # Increased for Claude 3.5 Haiku's 45k TPM limit
+USE_ANTHROPIC = True  # Set to True to use Anthropic Claude, False to use OpenAI
 
 # Load environment variables
 load_dotenv()
@@ -48,8 +50,12 @@ def main():
     print("STRICT REQUIREMENTS:")
     print("- 5 or more top tracks with both title and YouTube link")
     print("- 20+ style keywords, each with sources that include full URLs")
-    print("- No separate sources array - sources included inline with each keyword")
+    print("- Properly formatted markdown with clear sections")
     print("- Complete information for all required fields\n")
+    
+    # Display which LLM provider is being used
+    provider = "Anthropic Claude 3.5 Haiku" if USE_ANTHROPIC else "OpenAI GPT-4o"
+    print(f"Using {provider} as the LLM provider\n")
     
     # Create session directories IMMEDIATELY at startup
     # This must be done before any other code that might use the context
@@ -66,19 +72,23 @@ def main():
             print("Exiting. Please install BeautifulSoup and try again.")
             exit(0)
     
-    # Check if the OpenAI API key is available
-    if "OPENAI_API_KEY" not in os.environ:
+    # Check if the appropriate API key is available
+    if USE_ANTHROPIC and "ANTHROPIC_API_KEY" not in os.environ:
+        print("ERROR: Anthropic API key is required. Set ANTHROPIC_API_KEY environment variable.")
+        exit(1)
+    elif not USE_ANTHROPIC and "OPENAI_API_KEY" not in os.environ:
         print("ERROR: OpenAI API key is required. Set OPENAI_API_KEY environment variable.")
         exit(1)
     
     # Get the artist name from user input
     artist_name = input("Enter the name of a musical artist to research: ")
     
-    # Create the agents
-    music_researcher_agent = create_music_researcher_agent(max_rpm=MAX_RPM)
+    # Create the agents with the appropriate LLM provider
+    music_researcher_agent = create_music_researcher_agent(max_rpm=MAX_RPM, use_anthropic=USE_ANTHROPIC)
     project_manager_agent = create_project_manager_agent(
         max_revision_attempts=MAX_REVISION_ATTEMPTS,
-        max_rpm=MAX_RPM
+        max_rpm=MAX_RPM,
+        use_anthropic=USE_ANTHROPIC
     )
     
     # Create the research and verification tasks
@@ -89,6 +99,17 @@ def main():
         max_revision_attempts=MAX_REVISION_ATTEMPTS
     )
     
+    # Configure memory parameters appropriately for the selected LLM
+    model_kwargs = {}
+    if not USE_ANTHROPIC:
+        # OpenAI-specific configuration
+        model_kwargs = {
+            "truncation_strategy": {
+                "type": "auto",
+                "max_context_length": MAX_CONTEXT_LENGTH
+            }
+        }
+    
     # Create and run the crew with both agents and their tasks
     # Use the sequential process to ensure tasks run in the correct order
     crew = Crew(
@@ -96,7 +117,8 @@ def main():
         tasks=[research_task, verification_task],
         verbose=True,
         process=Process.sequential,  # Use Process.sequential instead of Crew.SEQUENTIAL
-        rpm=MAX_RPM  # Apply rate limiting at the crew level as well
+        rpm=MAX_RPM,  # Apply rate limiting at the crew level as well
+        model_kwargs=model_kwargs
     )
     
     # Execute the crew
@@ -108,53 +130,21 @@ def main():
         print(f"VERIFIED RESULTS FOR {artist_name}")
         print("="*50 + "\n")
         
-        # Extract and parse research result
-        research_json = extract_json(result)
-        if research_json:
-            print(json.dumps(research_json, indent=2))
-            
-            # Save the verified JSON to the output directory
-            save_result_to_file(research_json, artist_name, "verified", CONTEXT.output_dir)
-        else:
-            # Attempt to find JSON in the raw output
-            print("Attempting to extract JSON from raw output...")
-            # First try to get raw output
-            raw_output = ""
-            if hasattr(result, 'raw_output'):
-                raw_output = result.raw_output
-            elif hasattr(result, 'output'):
-                raw_output = result.output
-            else:
-                raw_output = str(result)
-                
-            # Try to find JSON in the raw text
-            json_data = extract_json(raw_output)
-            if json_data:
-                print(json.dumps(json_data, indent=2))
-                
-                # Save the verified JSON to the output directory
-                save_result_to_file(json_data, artist_name, "verified", CONTEXT.output_dir)
-            else:
-                # If still no JSON, try to get the original research results from the first task
-                print("No JSON found in Project Manager output, attempting to retrieve original research...")
-                
-                if hasattr(result, 'task_results') and len(result.task_results) >= 1:
-                    original_research = result.task_results[0]
-                    original_json = extract_json(original_research)
-                    
-                    if original_json:
-                        print("UNVERIFIED RESEARCH RESULTS (Project Manager did not verify):")
-                        print(json.dumps(original_json, indent=2))
-                        
-                        # Save the unverified JSON as a fallback
-                        save_result_to_file(original_json, artist_name, "unverified", CONTEXT.output_dir)
-                    else:
-                        print("CREW RESULTS (no valid JSON found):")
-                        print(raw_output)
-                else:
-                    print("CREW RESULTS (no valid JSON found):")
-                    print(raw_output)
+        # Simply print the markdown result and save to file
+        markdown_result = str(result)
+        print(markdown_result)
         
+        # Save the verified markdown to the output directory
+        markdown_filename = f"{artist_name.lower().replace(' ', '_')}_profile.md"
+        markdown_filepath = CONTEXT.output_dir / markdown_filename
+        
+        try:
+            with open(markdown_filepath, 'w', encoding='utf-8') as f:
+                f.write(markdown_result)
+            print(f"\nMarkdown saved to: {markdown_filepath}")
+        except Exception as e:
+            print(f"\nError saving markdown to file: {str(e)}")
+            
     except Exception as e:
         print(f"Error processing result: {str(e)}")
         print("Raw result:")
@@ -163,14 +153,17 @@ def main():
         try:
             if hasattr(result, 'task_results') and len(result.task_results) >= 1:
                 print("\nAttempting to extract from first task result:")
-                original_json = extract_json(result.task_results[0])
-                if original_json:
-                    print(json.dumps(original_json, indent=2))
-                    
-                    # Save the emergency fallback JSON
-                    save_result_to_file(original_json, artist_name, "emergency", CONTEXT.output_dir)
-        except:
-            pass
+                print(result.task_results[0])
+                
+                # Try to save the emergency result
+                emergency_filename = f"{artist_name.lower().replace(' ', '_')}_emergency.md"
+                emergency_filepath = CONTEXT.output_dir / emergency_filename
+                
+                with open(emergency_filepath, 'w', encoding='utf-8') as f:
+                    f.write(str(result.task_results[0]))
+                print(f"\nEmergency markdown saved to: {emergency_filepath}")
+        except Exception as inner_e:
+            print(f"Error accessing task results: {str(inner_e)}")
 
 
 if __name__ == "__main__":

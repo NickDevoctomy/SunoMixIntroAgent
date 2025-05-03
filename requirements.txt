@@ -4,4 +4,6 @@ openai>=1.10.0
 python-dotenv>=1.0.0
 requests>=2.31.0
 beautifulsoup4>=4.12.2
-tavily-python>=0.2.9 
+tavily-python>=0.2.9
+langchain-anthropic>=0.1.1
+anthropic>=0.22.0 
