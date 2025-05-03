@@ -85,6 +85,33 @@ The system enforces the following strict requirements:
 - No separate sources array - all sources must be inline with each keyword
 - Complete information for all required fields
 
+## Code Structure
+
+The project has been refactored for better organization:
+
+```
+/
+├── agents/             # Agent definitions
+│   ├── __init__.py
+│   ├── music_researcher_agent.py  # Music researcher agent
+│   └── project_manager_agent.py   # Project manager agent
+├── tasks/              # Task definitions
+│   ├── __init__.py
+│   ├── music_research_task.py     # Task for researching artists
+│   └── verification_task.py       # Task for verifying research
+├── utils/              # Utility functions
+│   ├── __init__.py
+│   ├── json_extraction.py         # JSON parsing & extraction
+│   └── file_operations.py         # File handling utilities
+├── web_search_tool.py             # Web search tool using Tavily
+├── style_sources_tool.py          # Style research tool
+├── music_generation_tool.py       # Music generation with Suno (future)
+├── suno_tool.py                   # Suno API interface
+├── research_context.py            # Global context & session management
+├── main.py                        # Application entry point
+└── requirements.txt               # Dependencies
+```
+
 ## Data Format
 
 The application produces JSON in the following format:
