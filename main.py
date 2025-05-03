@@ -133,43 +133,21 @@ def main():
     # Process the result
     try:
         print("\n\n" + "="*50)
-        print(f"VERIFIED RESULTS FOR {artist_name}")
+        print(f"COMPLETED RESEARCH FOR {artist_name}")
         print("="*50 + "\n")
         
-        # Simply print the markdown result and save to file
-        markdown_result = str(result)
-        print(markdown_result)
+        # Display the final result (which should be confirmation that the file was written)
+        print(result)
         
-        # Save the verified markdown to the output directory
-        markdown_filename = f"{artist_name.lower().replace(' ', '_')}_profile.md"
-        markdown_filepath = CONTEXT.output_dir / markdown_filename
-        
-        try:
-            with open(markdown_filepath, 'w', encoding='utf-8') as f:
-                f.write(markdown_result)
-            print(f"\nMarkdown saved to: {markdown_filepath}")
-        except Exception as e:
-            print(f"\nError saving markdown to file: {str(e)}")
+        # Display the files in the output directory
+        print("\nOutput files created in this session:")
+        for file in CONTEXT.output_dir.glob(f"{artist_name.lower().replace(' ', '_')}*.*"):
+            print(f"- {file.name}")
             
     except Exception as e:
         print(f"Error processing result: {str(e)}")
         print("Raw result:")
         print(result)
-        # Try to access the raw task results as a last resort
-        try:
-            if hasattr(result, 'task_results') and len(result.task_results) >= 1:
-                print("\nAttempting to extract from first task result:")
-                print(result.task_results[0])
-                
-                # Try to save the emergency result
-                emergency_filename = f"{artist_name.lower().replace(' ', '_')}_emergency.md"
-                emergency_filepath = CONTEXT.output_dir / emergency_filename
-                
-                with open(emergency_filepath, 'w', encoding='utf-8') as f:
-                    f.write(str(result.task_results[0]))
-                print(f"\nEmergency markdown saved to: {emergency_filepath}")
-        except Exception as inner_e:
-            print(f"Error accessing task results: {str(inner_e)}")
 
 
 if __name__ == "__main__":

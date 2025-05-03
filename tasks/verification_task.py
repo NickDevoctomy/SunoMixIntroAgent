@@ -45,7 +45,7 @@ def create_verification_task(artist_name, project_manager_agent, max_revision_at
         6. At least 20 unique style keywords with proper citation
         7. Realistic information (no obviously fake or contradictory content)
         
-        Important: You can only request revisions up to {max_revision_attempts} times. If after {max_revision_attempts} 
+        Important: You can only request revisions up to {max_revision_attempts} attempts. If after {max_revision_attempts} 
         attempts the research still has issues, you should make the best final decision based on what you have.
         Keep track of how many revision attempts have been made and provide that count in your response.
         
@@ -53,26 +53,25 @@ def create_verification_task(artist_name, project_manager_agent, max_revision_at
         delegate the task back to the Music Research Specialist with specific instructions on what needs to be 
         fixed or improved. Be explicit about what's missing or inadequate.
         
-        If all requirements are met OR you've reached the maximum revision attempts, return the COMPLETE markdown document.
-        You may make minor formatting improvements to the final document if needed, but preserve all the core content.
+        If all requirements are met OR you've reached the maximum revision attempts:
+        1. DO NOT return the complete markdown document in your response text
+        2. Instead, use the write_markdown_file tool to save the final markdown content to a file
+        3. The tool requires two parameters:
+           - content: The complete, clean markdown content
+           - artist_name: "{artist_name}"
         
-        Your response should either be:
-        1. A delegation instruction with specific improvements needed and the current revision attempt count, OR
-        2. The complete markdown document with all requirements satisfied
-        
-        CRITICAL INSTRUCTIONS FOR FINAL MARKDOWN:
-        - DO NOT include any commentary about your process, revision counts, or verification
-        - DO NOT include text like "Revision Attempt: X" or "All requirements are now satisfied"
-        - DO NOT add text like "Here is the complete markdown document:"
-        - Return ONLY the clean, final markdown content itself
-        - Start directly with the markdown heading (e.g., "# Artist Profile: [Name]")
+        CRITICAL INSTRUCTIONS FOR USING THE TOOL:
+        - The content parameter should contain ONLY the clean markdown without any commentary
+        - Do not include any verification notes, revision counts, or explanations in the content
+        - The markdown should start directly with the main heading
+        - After using the tool, your response should be brief and only confirm that the file was written
         
         IMPORTANT INSTRUCTIONS (FOLLOW THESE EXACTLY):
         - You are limited to requesting a maximum of {max_revision_attempts} revisions
         - Track the revision count in your responses when delegating
-        - When approving research, return ONLY the markdown document itself with no additional text
-        - Do not include any "verification complete" text or thinking process before or after the document
+        - When approving research, use ONLY the write_markdown_file tool to save the final document
+        - Do not include any "verification complete" text or thinking process in your final response
         """,
         agent=project_manager_agent,
-        expected_output="Either the complete markdown document or specific instructions for improvements"
+        expected_output="Either delegation instructions for improvements or confirmation that the markdown file was written"
     ) 

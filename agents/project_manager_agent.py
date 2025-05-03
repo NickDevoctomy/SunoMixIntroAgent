@@ -10,6 +10,9 @@ from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 import os
 
+# Import the markdown writing tool
+from tools import create_markdown_writing_tool
+
 def create_project_manager_agent(max_revision_attempts=3, llm=None, max_rpm=2, use_anthropic=False):
     """
     Create and return a project manager agent.
@@ -51,6 +54,9 @@ def create_project_manager_agent(max_revision_attempts=3, llm=None, max_rpm=2, u
                 }
             )
     
+    # Create the markdown writing tool
+    markdown_tool = create_markdown_writing_tool()
+    
     # Define the project manager agent
     project_manager = Agent(
         role="Project Manager",
@@ -61,17 +67,15 @@ def create_project_manager_agent(max_revision_attempts=3, llm=None, max_rpm=2, u
         substantive information. You have a reputation for catching errors and omissions that others miss.
         You will only allow up to {max_revision_attempts} revision attempts before making the final decision.
         
-        When approving research, you MUST return ONLY the COMPLETE markdown document as your ENTIRE response,
-        with absolutely no additional commentary. Do not include:
-        - Any thinking about your verification process
-        - Text like "Revision Attempt: X" or "All requirements are now satisfied" 
-        - Headers such as "Here is the complete markdown document:" or "Verification complete"
-        - Any commentary about your decision making
+        When the research meets all requirements, you MUST use the markdown writing tool to save the
+        final document instead of returning it in your response. This ensures the markdown is properly 
+        stored and doesn't include any additional commentary.
         
-        Return ONLY the clean, final markdown content itself, starting directly with the markdown heading.""",
+        Do not include any thinking about your verification process, commentary about your decision making,
+        or text explaining what you're doing. Just use the tool to save the final markdown document.""",
         verbose=True,
         allow_delegation=True,
-        tools=[],  # No special tools needed for the manager
+        tools=[markdown_tool],  # Add the markdown writing tool
         llm=llm,
         max_rpm=max_rpm  # Add rate limiting to control tokens per minute
     )
