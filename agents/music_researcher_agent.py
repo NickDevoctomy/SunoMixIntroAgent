@@ -9,13 +9,8 @@ from crewai import Agent
 from langchain_openai import ChatOpenAI
 import os
 
-# Import tools
-try:
-    from web_search_tool import web_search
-    from style_sources_tool import gather_style_sources
-except ImportError as e:
-    print(f"Error importing music researcher tools: {str(e)}")
-    raise e
+# Import tools from the tools package
+from tools import create_web_search_tool, create_style_sources_tool
 
 def create_music_researcher_agent(llm=None, max_rpm=2):
     """
@@ -37,6 +32,10 @@ def create_music_researcher_agent(llm=None, max_rpm=2):
             model="gpt-4o",
             temperature=0.7
         )
+    
+    # Get the tools from the tools package
+    web_search = create_web_search_tool()
+    gather_style_sources = create_style_sources_tool()
     
     # Define the music researcher agent
     music_researcher = Agent(

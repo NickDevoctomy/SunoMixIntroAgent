@@ -87,26 +87,30 @@ The system enforces the following strict requirements:
 
 ## Code Structure
 
-The project has been refactored for better organization:
+The project is organized by component types:
 
 ```
 /
 ├── agents/             # Agent definitions
 │   ├── __init__.py
 │   ├── music_researcher_agent.py  # Music researcher agent
+│   ├── music_generator_agent.py   # Music generator agent
 │   └── project_manager_agent.py   # Project manager agent
 ├── tasks/              # Task definitions
 │   ├── __init__.py
 │   ├── music_research_task.py     # Task for researching artists
+│   ├── music_generation_task.py   # Task for generating music
 │   └── verification_task.py       # Task for verifying research
+├── tools/              # Tool definitions
+│   ├── __init__.py
+│   ├── web_search_tool.py         # Web search tool using Tavily
+│   ├── style_sources_tool.py      # Style research tool
+│   ├── music_generation_tool.py   # Music generation with Suno
+│   └── suno_tool.py               # Suno API interface
 ├── utils/              # Utility functions
 │   ├── __init__.py
 │   ├── json_extraction.py         # JSON parsing & extraction
 │   └── file_operations.py         # File handling utilities
-├── web_search_tool.py             # Web search tool using Tavily
-├── style_sources_tool.py          # Style research tool
-├── music_generation_tool.py       # Music generation with Suno (future)
-├── suno_tool.py                   # Suno API interface
 ├── research_context.py            # Global context & session management
 ├── main.py                        # Application entry point
 └── requirements.txt               # Dependencies
@@ -152,7 +156,7 @@ The application produces JSON in the following format:
 
 ## How It Works
 
-The application uses two specialized agents powered by OpenAI's GPT model:
+The application uses specialized agents powered by OpenAI's GPT model:
 
 ### Music Research Specialist
 
@@ -172,6 +176,30 @@ This agent verifies the research quality:
 
 The project manager can request up to 3 revisions before making a final decision.
 
+### Music Generator
+
+This agent creates music inspired by the researched artist:
+1. Takes the artist data from the research phase
+2. Extracts style keywords, genre, and other musical characteristics
+3. Uses the Suno API to generate music that captures the artist's style
+4. Provides download capabilities for the generated tracks
+
+### Tools Organization
+
+The application uses several tools organized in the `tools` directory:
+1. **Web Search Tool**: Uses the Tavily API to perform real web searches
+2. **Style Sources Tool**: Gathers detailed information about an artist's style from multiple sources
+3. **Music Generation Tool**: Interfaces with the Suno API to generate music based on artist style
+4. **Suno Tool**: Provides direct access to the Suno API for music generation
+
+Each tool is implemented as a function factory that creates and returns a tool instance, 
+following the same pattern used for agents and tasks.
+
 ## Future Development
 
-Future versions plan to integrate with Suno AI to generate music in the style of researched artists. This functionality is currently in development. 
+Future enhancements may include:
+1. User interface improvements for easier interaction
+2. Additional music analysis capabilities
+3. Support for batch processing multiple artists
+4. Integration with music streaming platforms
+5. Enhanced visualization of artist relationships and influences 

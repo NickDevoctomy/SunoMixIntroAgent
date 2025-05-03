@@ -9,15 +9,8 @@ from crewai import Agent
 from langchain_openai import ChatOpenAI
 import os
 
-# Import tools (these will need to be activated in future development)
-try:
-    from music_generation_tool import generate_music, download_music
-except ImportError as e:
-    print(f"Warning: Music generation tools not available: {str(e)}")
-    print("Music generation features will be disabled.")
-    # Create placeholders for the tools to avoid errors
-    generate_music = None
-    download_music = None
+# Import tools from the tools package
+from tools import create_music_generation_tool
 
 def create_music_generator_agent(llm=None, max_rpm=2):
     """
@@ -31,11 +24,13 @@ def create_music_generator_agent(llm=None, max_rpm=2):
         max_rpm: Maximum requests per minute to control rate limiting (default: 2)
         
     Returns:
-        Agent: Configured music generator agent or None if tools unavailable
+        Agent: Configured music generator agent
     """
-    # Check if the required tools are available
-    if generate_music is None or download_music is None:
-        print("Music generator agent cannot be created: required tools not available")
+    try:
+        # Get the tools from the tools package
+        generate_music, download_music = create_music_generation_tool()
+    except Exception as e:
+        print(f"Music generator agent cannot be created: {str(e)}")
         return None
     
     # Create a new LLM if one wasn't provided

@@ -1,3 +1,9 @@
+"""
+Suno API Tool definition.
+
+This module defines the Suno API tool which is used for music generation.
+"""
+
 import os
 import requests
 import json
@@ -201,34 +207,14 @@ class SunoTool:
         except IOError as e:
             return {"error": f"File error: {str(e)}"}
 
-
-# Example usage of the tool
-def example_usage():
-    """Example usage of the SunoTool."""
-    # Create the tool
-    suno_tool = SunoTool()
+def create_suno_tool(api_key: Optional[str] = None) -> SunoTool:
+    """
+    Create and return a SunoTool instance.
     
-    # Generate music
-    generation_result = suno_tool.generate_music(
-        prompt="A melodic pop song with female vocals about finding your way in life",
-        title="Finding My Way",
-        style_prompt="similar to Taylor Swift meets Lorde, with a catchy chorus and emotional bridge",
-        genre=["pop", "indie"],
-        bpm=120,
-        key="G major"
-    )
-    
-    print(json.dumps(generation_result, indent=2))
-    
-    # If generation was successful, download the audio
-    if generation_result.get("status") == "complete":
-        generation_id = generation_result.get("generation_id")
-        download_result = suno_tool.download_audio(
-            generation_id=generation_id,
-            output_path=f"suno_generation_{generation_id}.mp3"
-        )
-        print(json.dumps(download_result, indent=2))
-
-
-if __name__ == "__main__":
-    example_usage() 
+    Args:
+        api_key: Optional API key. If not provided, will be read from environment variables.
+        
+    Returns:
+        SunoTool: Configured SunoTool instance
+    """
+    return SunoTool(api_key=api_key) 
