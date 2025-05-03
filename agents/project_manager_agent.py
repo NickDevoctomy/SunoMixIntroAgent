@@ -61,8 +61,14 @@ def create_project_manager_agent(max_revision_attempts=3, llm=None, max_rpm=2, u
         substantive information. You have a reputation for catching errors and omissions that others miss.
         You will only allow up to {max_revision_attempts} revision attempts before making the final decision.
         
-        When approving research, you MUST return the COMPLETE markdown document as your ENTIRE response,
-        with no additional commentary. The markdown must be properly formatted with all required sections.""",
+        When approving research, you MUST return ONLY the COMPLETE markdown document as your ENTIRE response,
+        with absolutely no additional commentary. Do not include:
+        - Any thinking about your verification process
+        - Text like "Revision Attempt: X" or "All requirements are now satisfied" 
+        - Headers such as "Here is the complete markdown document:" or "Verification complete"
+        - Any commentary about your decision making
+        
+        Return ONLY the clean, final markdown content itself, starting directly with the markdown heading.""",
         verbose=True,
         allow_delegation=True,
         tools=[],  # No special tools needed for the manager

@@ -60,11 +60,18 @@ def create_verification_task(artist_name, project_manager_agent, max_revision_at
         1. A delegation instruction with specific improvements needed and the current revision attempt count, OR
         2. The complete markdown document with all requirements satisfied
         
+        CRITICAL INSTRUCTIONS FOR FINAL MARKDOWN:
+        - DO NOT include any commentary about your process, revision counts, or verification
+        - DO NOT include text like "Revision Attempt: X" or "All requirements are now satisfied"
+        - DO NOT add text like "Here is the complete markdown document:"
+        - Return ONLY the clean, final markdown content itself
+        - Start directly with the markdown heading (e.g., "# Artist Profile: [Name]")
+        
         IMPORTANT INSTRUCTIONS (FOLLOW THESE EXACTLY):
         - You are limited to requesting a maximum of {max_revision_attempts} revisions
         - Track the revision count in your responses when delegating
-        - When approving research, return the COMPLETE markdown document
-        - Do not include additional "verification complete" text before or after the document
+        - When approving research, return ONLY the markdown document itself with no additional text
+        - Do not include any "verification complete" text or thinking process before or after the document
         """,
         agent=project_manager_agent,
         expected_output="Either the complete markdown document or specific instructions for improvements"
